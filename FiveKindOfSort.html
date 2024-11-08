@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sorting Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      .chart-container {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+      }
+      .chart {
+        width: 600px;
+        height: 800px;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chart-container">
+      <canvas id="quickSortChart" class="chart"></canvas>
+      <canvas id="heapSortChart" class="chart"></canvas>
+      <canvas id="bubbleSortChart" class="chart"></canvas>
+      <canvas id="insertionSortChart" class="chart"></canvas>
+      <canvas id="selectionSortChart" class="chart"></canvas>
+    </div>
+
+    <script>
+      // 初始數據
+      let arrQuickSort = [
+        10, 20, 12, 2, 16, 5, 1, 9, 18, 4, 11, 3, 14, 13, 7, 17, 6, 19, 8, 15,
+        25, 24, 21, 22, 23,
+      ];
+      let arrHeapSort = [...arrQuickSort];
+      let arrBubbleSort = [...arrQuickSort];
+      let arrInsertionSort = [...arrQuickSort];
+      let arrSelectionSort = [...arrQuickSort];
+
+      // 為每個數值生成顏色並綁定顏色
+      let colorMapQuickSort = arrQuickSort.map(() => generateColor());
+      let colorMapHeapSort = [...colorMapQuickSort];
+      let colorMapBubbleSort = [...colorMapQuickSort];
+      let colorMapInsertionSort = [...colorMapQuickSort];
+      let colorMapSelectionSort = [...colorMapQuickSort];
+
+      // 初始化五個圖表
+      const quickSortChart = createChart(
+        "quickSortChart",
+        arrQuickSort,
+        colorMapQuickSort,
+        "QuickSort Visualization"
+      );
+      const heapSortChart = createChart(
+        "heapSortChart",
+        arrHeapSort,
+        colorMapHeapSort,
+        "HeapSort Visualization"
+      );
+      const bubbleSortChart = createChart(
+        "bubbleSortChart",
+        arrBubbleSort,
+        colorMapBubbleSort,
+        "BubbleSort Visualization"
+      );
+      const insertionSortChart = createChart(
+        "insertionSortChart",
+        arrInsertionSort,
+        colorMapInsertionSort,
+        "InsertionSort Visualization"
+      );
+      const selectionSortChart = createChart(
+        "selectionSortChart",
+        arrSelectionSort,
+        colorMapSelectionSort,
+        "SelectionSort Visualization"
+      );
+
+      // 創建圖表函數
+      function createChart(canvasId, dataArr, colorArr, label) {
+        const ctx = document.getElementById(canvasId).getContext("2d");
+        return new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: dataArr.map((_, index) => index + 1),
+            datasets: [
+              {
+                label: label,
+                data: dataArr,
+                backgroundColor: colorArr,
+                borderColor: "rgba(54, 162, 235, 1)",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: false,
+            animation: false,
+            scales: {
+              y: { beginAtZero: true },
+            },
+          },
+        });
+      }
+
+      // 延時函數
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      // 交換函數，包含顏色交換
+      function swap(arr, colorMap, i, j) {
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+        [colorMap[i], colorMap[j]] = [colorMap[j], colorMap[i]];
+      }
+
+      // 生成隨機顏色
+      function generateColor() {
+        return `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(
+          Math.random() * 255
+        )}, ${Math.floor(Math.random() * 255)}, 0.6)`;
+      }
+
+      // 更新圖表函數
+      async function updateChart(chart, dataArr, colorArr) {
+        chart.data.datasets[0].data = [...dataArr];
+        chart.data.datasets[0].backgroundColor = [...colorArr];
+        chart.update();
+        await sleep(200);
+      }
+
+      // QuickSort 函數
+      async function quickSort(arr, colorMap, chart, left, right) {
+        if (left < right) {
+          let pivotIndex = await partition(arr, colorMap, chart, left, right);
+          await quickSort(arr, colorMap, chart, left, pivotIndex - 1);
+          await quickSort(arr, colorMap, chart, pivotIndex + 1, right);
+        }
+      }
+
+      async function partition(arr, colorMap, chart, left, right) {
+        let pivot = arr[right];
+        let i = left - 1;
+
+        for (let j = left; j < right; j++) {
+          if (arr[j] < pivot) {
+            i++;
+            swap(arr, colorMap, i, j);
+            await updateChart(chart, arr, colorMap);
+          }
+        }
+        swap(arr, colorMap, i + 1, right);
+        await updateChart(chart, arr, colorMap);
+        return i + 1;
+      }
+
+      // HeapSort 函數
+      async function heapSort(arr, colorMap, chart) {
+        let n = arr.length;
+
+        for (let i = Math.floor(n / 2) - 1; i >= 0; i--)
+          await heapify(arr, colorMap, chart, n, i);
+
+        for (let i = n - 1; i > 0; i--) {
+          swap(arr, colorMap, 0, i);
+          await updateChart(chart, arr, colorMap);
+          await heapify(arr, colorMap, chart, i, 0);
+        }
+      }
+
+      async function heapify(arr, colorMap, chart, n, i) {
+        let largest = i;
+        let left = 2 * i + 1;
+        let right = 2 * i + 2;
+
+        if (left < n && arr[left] > arr[largest]) largest = left;
+        if (right < n && arr[right] > arr[largest]) largest = right;
+
+        if (largest !== i) {
+          swap(arr, colorMap, i, largest);
+          await updateChart(chart, arr, colorMap);
+          await heapify(arr, colorMap, chart, n, largest);
+        }
+      }
+
+      // BubbleSort 函數
+      async function bubbleSort(arr, colorMap, chart) {
+        let n = arr.length;
+
+        for (let i = 0; i < n - 1; i++) {
+          for (let j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+              swap(arr, colorMap, j, j + 1);
+              await updateChart(chart, arr, colorMap);
+            }
+          }
+        }
+      }
+
+      // InsertionSort 函數
+      async function insertionSort(arr, colorMap, chart) {
+        let n = arr.length;
+
+        for (let i = 1; i < n; i++) {
+          let key = arr[i];
+          let j = i - 1;
+
+          while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+            await updateChart(chart, arr, colorMap);
+          }
+          arr[j + 1] = key;
+          await updateChart(chart, arr, colorMap);
+        }
+      }
+
+      // SelectionSort 函數
+      async function selectionSort(arr, colorMap, chart) {
+        let n = arr.length;
+
+        for (let i = 0; i < n - 1; i++) {
+          let minIdx = i;
+          for (let j = i + 1; j < n; j++) {
+            if (arr[j] < arr[minIdx]) minIdx = j;
+          }
+          if (minIdx !== i) {
+            swap(arr, colorMap, i, minIdx);
+            await updateChart(chart, arr, colorMap);
+          }
+        }
+      }
+
+      // 啟動排序並展示動畫
+      quickSort(
+        arrQuickSort,
+        colorMapQuickSort,
+        quickSortChart,
+        0,
+        arrQuickSort.length - 1
+      );
+      heapSort(arrHeapSort, colorMapHeapSort, heapSortChart);
+      bubbleSort(arrBubbleSort, colorMapBubbleSort, bubbleSortChart);
+      insertionSort(
+        arrInsertionSort,
+        colorMapInsertionSort,
+        insertionSortChart
+      );
+      selectionSort(
+        arrSelectionSort,
+        colorMapSelectionSort,
+        selectionSortChart
+      );
+    </script>
+  </body>
+</html>
